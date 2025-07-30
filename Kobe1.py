@@ -6,11 +6,10 @@ import pytesseract
 import pygetwindow as gw
 from frame import ScreenAutomator, ScreenRegion, FlowStatus
 
+def list_difference_set(list1, list2):
+    return list(set(list1) - set(list2))
+
 def is_in_hanger():
-    '''
-    status = telemetry.get_wt_data("MISSION")
-    return status['status']
-    '''
     all_windows = gw.getAllWindows()
 
     try:
@@ -80,10 +79,46 @@ def get_command_qq(contact_name):
 def prompt_qq(target:str, text: str):
         activate_window(target)
         automator.type_text(text,interval=0.01)
+        time.sleep(0.2)
         automator.press_keys(["Enter"])
-        time.sleep(0.1)
+        time.sleep(0.2)
         activate_window("War Thunder")
         return None
+
+def get_current_selected():
+    activate_window("War Thunder")
+    country = []
+    mode = []
+    tmode = ['air','ground']
+    tcountry = ["usa", "rus", "ger", "gbr", "jpn", "chn", "ita", "fra", "swe", "isr"]
+    if automator.find_image("usa.png"):
+        country.append("usa")
+    if automator.find_image("rus.png"):
+        country.append("rus")
+    if automator.find_image("ger.png"):
+        country.append("ger")
+    if automator.find_image("gbr.png"):
+        country.append("gbr")
+    if automator.find_image("jpn.png"):
+        country.append("jpn")
+    if automator.find_image("chn.png"):
+        country.append("chn")
+    if automator.find_image("ita.png"):
+        country.append("ita")
+    if automator.find_image("fra.png"):
+        country.append("fra")
+    if automator.find_image("swe.png"):
+        country.append("swe")
+    if automator.find_image("isr.png"):
+        country.append("isr")
+    country = list_difference_set(tcountry,country)[0]
+    if automator.find_image("air.png"):
+        mode.append('air')
+    if automator.find_image("ground.png",confidence=1):
+        mode.append('ground')
+    mode = list_difference_set(tmode, mode)[0]
+    print(country, mode)
+    return country, mode
 
 def country_select_flow():
 
@@ -93,17 +128,26 @@ def country_select_flow():
             country = cmd[0]
             mode = cmd[1]
 
-            activate_window("War Thunder")
-            automator.click_element(automator.find_image, template_path="usa.png")
-            country_image = f"{country}.png"
-            automator.click_element(automator.find_image, template_path=country_image)
-            automator.click_element(automator.find_image, template_path="air.png")
-            automator.wait_for_element(automator.find_image, template_path="ground.png")
-            mode = f"{mode}.png"
-            automator.click_element(automator.find_image, template_path=mode)
-            automator.wait_for_element(automator.find_image, template_path="ready.png")
-            automator.click_element(automator.find_image, template_path="ready.png")
-            return True
+            if get_current_selected()[0] == country:
+                print("Already Selected")
+                mode = f"{mode}.png"
+                automator.click_element(automator.find_image, template_path=mode)
+                automator.wait_for_element(automator.find_image, template_path="ready.png")
+                automator.click_element(automator.find_image, template_path="ready.png")
+                return True
+
+            else:
+                activate_window("War Thunder")
+                #automator.click_element(automator.find_image, template_path="usa.png")
+                country_image = f"{country}.png"
+                automator.click_element(automator.find_image, template_path=country_image)
+                #automator.click_element(automator.find_image, template_path="air.png")
+                #automator.wait_for_element(automator.find_image, template_path="ground.png")
+                mode = f"{mode}.png"
+                automator.click_element(automator.find_image, template_path=mode)
+                automator.wait_for_element(automator.find_image, template_path="ready.png")
+                automator.click_element(automator.find_image, template_path="ready.png")
+                return True
         else:
             prompt_qq(user, "No Valid Command Found")
             return False
@@ -113,7 +157,7 @@ def country_select_flow():
         return False
 
 def gametime_idle():
-    for i in range(600):
+    for i in range(5):
         print(600-i)
         time.sleep(1)
     while True:
@@ -121,6 +165,20 @@ def gametime_idle():
         if state:
             return None
         time.sleep(10)
+
+def go_spectator():
+    if automator.wait_for_element(automator.find_image, template_path="specmode.png",timeout=30):
+        automator.click_element(automator.find_image, template_path="specmode.png")
+        return True
+    else:
+        return False
+
+def return_hanger():
+    if automator.wait_for_element(automator.find_image, template_path="tohanger.png"):
+        automator.click_element(automator.find_image, template_path="tohanger.png")
+        return True
+    else:
+        return False
 
 user = "神户"
 active_window = gw.getActiveWindow()
@@ -133,13 +191,26 @@ activate_window("War Thunder")
 while True:
     state = is_in_hanger()
     while state:
+        print("In Hanger")
         if country_select_flow():
             prompt_qq(user,"Ready")
             print("Ready")
-            time.sleep(20)
+            time.sleep(5)
             break
         else:
+            print("Ready Already")
             time.sleep(10)
     else:
         print("Not in Hanger")
-        gametime_idle()
+        if go_spectator():
+            print("Spectating")
+            prompt_qq(user, "Spectating")
+        else:
+            print("Failed to enter Spectator Mode")
+            prompt_qq(user, "Failed to enter Spectator Mode")
+        if return_hanger():
+            print("Returning to Hanger")
+            time.sleep(10)
+        else:
+            print("Return Failed")
+            gametime_idle()

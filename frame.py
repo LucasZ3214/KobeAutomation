@@ -145,7 +145,6 @@ class ScreenAutomator:
                 if presses > 1:
                     time.sleep(interval)
 
-            logger.info("按键操作完成")
             return True
         except Exception as e:
             logger.error(f"按键操作失败: {str(e)}")
@@ -155,7 +154,6 @@ class ScreenAutomator:
         try:
             logger.info(f"准备按下组合键: {args}")
             pyautogui.hotkey(*args, **kwargs)
-            logger.info("组合键操作完成")
             return True
         except Exception as e:
             logger.error(f"组合键操作失败: {str(e)}")
