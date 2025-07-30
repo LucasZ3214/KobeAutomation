@@ -157,8 +157,8 @@ def country_select_flow():
         return False
 
 def gametime_idle():
-    for i in range(5):
-        print(600-i)
+    for i in range(60):
+        print(60-i)
         time.sleep(1)
     while True:
         state = is_in_hanger()
@@ -193,7 +193,7 @@ while True:
     while state:
         print("In Hanger")
         if country_select_flow():
-            prompt_qq(user,"Ready")
+            prompt_qq(user,"OK")
             print("Ready")
             time.sleep(5)
             break
