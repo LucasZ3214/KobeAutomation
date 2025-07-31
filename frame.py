@@ -72,7 +72,7 @@ class ScreenAutomator:
                 if region:
                     center_x += region.x
                     center_y += region.y
-                return (center_x, center_y)
+                return center_x, center_y
             return None
 
         except Exception as e:
@@ -100,7 +100,7 @@ class ScreenAutomator:
                     center_x += region.x
                     center_y += region.y
 
-                return (center_x, center_y)
+                return center_x, center_y
         return None
 
     def wait_for_element(self, find_func: Callable, timeout: float = 10,
@@ -118,7 +118,7 @@ class ScreenAutomator:
         if position:
             pyautogui.moveTo(position[0], position[1], duration=0.1)
             time.sleep(0.2)
-            MouseClick("left")
+            mouseClick("left")
             time.sleep(0.5)
             return True
         return False
@@ -210,7 +210,7 @@ MOUSE_RIGHT_UP = 0x0010
 MOUSE_MIDDLE_DOWN = 0x0020
 MOUSE_MIDDLE_UP = 0x0040
 
-def PressKey(hexKeyCode: int):
+def pressKey(hexKeyCode: int):
     """按下键盘按键"""
     extra = ctypes.c_ulong(0)
     ii_ = Input_I()
@@ -218,7 +218,7 @@ def PressKey(hexKeyCode: int):
     x = Input(ctypes.c_ulong(1), ii_)
     SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
-def ReleaseKey(hexKeyCode: int):
+def releaseKey(hexKeyCode: int):
     """释放键盘按键"""
     extra = ctypes.c_ulong(0)
     ii_ = Input_I()
@@ -226,53 +226,53 @@ def ReleaseKey(hexKeyCode: int):
     x = Input(ctypes.c_ulong(1), ii_)
     SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
-def MouseClick(button: str = "left", x: Optional[int] = None, y: Optional[int] = None):
+def mouseClick(button: str = "left", x: Optional[int] = None, y: Optional[int] = None):
 
     if x is not None and y is not None:
-        MoveMouse(x, y)
+        moveMouse(x, y)
 
     if button.lower() == "left":
-        MouseEvent(MOUSE_LEFT_DOWN)
-        MouseEvent(MOUSE_LEFT_UP)
+        mouseEvent(MOUSE_LEFT_DOWN)
+        mouseEvent(MOUSE_LEFT_UP)
     elif button.lower() == "right":
-        MouseEvent(MOUSE_RIGHT_DOWN)
-        MouseEvent(MOUSE_RIGHT_UP)
+        mouseEvent(MOUSE_RIGHT_DOWN)
+        mouseEvent(MOUSE_RIGHT_UP)
     elif button.lower() == "middle":
-        MouseEvent(MOUSE_MIDDLE_DOWN)
-        MouseEvent(MOUSE_MIDDLE_UP)
+        mouseEvent(MOUSE_MIDDLE_DOWN)
+        mouseEvent(MOUSE_MIDDLE_UP)
     else:
         raise ValueError(f"不支持的鼠标按键: {button}")
 
-def MouseDown(button: str = "left"):
+def mouseDown(button: str = "left"):
 
     if button.lower() == "left":
-        MouseEvent(MOUSE_LEFT_DOWN)
+        mouseEvent(MOUSE_LEFT_DOWN)
     elif button.lower() == "right":
-        MouseEvent(MOUSE_RIGHT_DOWN)
+        mouseEvent(MOUSE_RIGHT_DOWN)
     elif button.lower() == "middle":
-        MouseEvent(MOUSE_MIDDLE_DOWN)
+        mouseEvent(MOUSE_MIDDLE_DOWN)
     else:
         raise ValueError(f"不支持的鼠标按键: {button}")
 
-def MouseUp(button: str = "left"):
+def mouseUp(button: str = "left"):
     """释放鼠标按键"""
     if button.lower() == "left":
-        MouseEvent(MOUSE_LEFT_UP)
+        mouseEvent(MOUSE_LEFT_UP)
     elif button.lower() == "right":
-        MouseEvent(MOUSE_RIGHT_UP)
+        mouseEvent(MOUSE_RIGHT_UP)
     elif button.lower() == "middle":
-        MouseEvent(MOUSE_MIDDLE_UP)
+        mouseEvent(MOUSE_MIDDLE_UP)
     else:
         raise ValueError(f"不支持的鼠标按键: {button}")
 
-def MouseEvent(dwFlags: int, dx: int = 0, dy: int = 0, dwData: int = 0):
+def mouseEvent(dwFlags: int, dx: int = 0, dy: int = 0, dwData: int = 0):
     extra = ctypes.c_ulong(0)
     ii_ = Input_I()
     ii_.mi = MouseInput(dx, dy, dwData, dwFlags, 0, ctypes.pointer(extra))
     x = Input(ctypes.c_ulong(0), ii_)  # 0表示鼠标输入
     SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
-def MoveMouse(x: int, y: int, relative: bool = False):
+def moveMouse(x: int, y: int, relative: bool = False):
     """
     移动鼠标到指定位置
     :param x: X坐标
@@ -280,16 +280,16 @@ def MoveMouse(x: int, y: int, relative: bool = False):
     :param relative: 是否为相对移动
     """
     if relative:
-        MouseEvent(0x0001, x, y)  # MOUSEEVENTF_MOVE
+        mouseEvent(0x0001, x, y)  # MOUSEEVENTF_MOVE
     else:
         # 转换为绝对坐标 (0-65535)
         screen_width = ctypes.windll.user32.GetSystemMetrics(0)
         screen_height = ctypes.windll.user32.GetSystemMetrics(1)
         abs_x = int((x / screen_width) * 65535)
         abs_y = int((y / screen_height) * 65535)
-        MouseEvent(0x8000 | 0x0001, abs_x, abs_y)  # MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE
+        mouseEvent(0x8000 | 0x0001, abs_x, abs_y)  # MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE
 
-def MouseScroll(direction: str = "up", clicks: int = 1):
+def mouseScroll(direction: str = "up", clicks: int = 1):
     """
     模拟鼠标滚轮滚动
     :param direction: 滚动方向 (up/down)
@@ -302,4 +302,4 @@ def MouseScroll(direction: str = "up", clicks: int = 1):
     else:
         raise ValueError("方向必须是 'up' 或 'down'")
 
-    MouseEvent(0x0800, dwData=dwData)  # MOUSEEVENTF_WHEEL
+    mouseEvent(0x0800, dwData=dwData)  # MOUSEEVENTF_WHEEL

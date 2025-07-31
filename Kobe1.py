@@ -1,10 +1,9 @@
-import os
-import re
 import time
 import pyautogui
 import pytesseract
 import pygetwindow as gw
-from frame import ScreenAutomator, ScreenRegion, FlowStatus
+from frame import ScreenAutomator
+
 
 def list_difference_set(list1, list2):
     return list(set(list1) - set(list2))
@@ -77,11 +76,14 @@ def get_command_qq(contact_name):
         return False
 
 def prompt_qq(target:str, text: str):
+
         activate_window(target)
+        automator.hotkey(['ctrl', 'a'])
+        automator.press_keys(['backspace'], interval=0.01)
         automator.type_text(text,interval=0.01)
         time.sleep(0.2)
-        automator.press_keys(["Enter"])
-        time.sleep(0.2)
+        automator.press_keys(['enter'],presses=2)
+        time.sleep(0.5)
         activate_window("War Thunder")
         return None
 
@@ -111,7 +113,10 @@ def get_current_selected():
         country.append("swe")
     if automator.find_image("isr.png"):
         country.append("isr")
-    country = list_difference_set(tcountry,country)[0]
+    if country == []:
+        return False
+    else:
+        country = list_difference_set(tcountry,country)[0]
     if automator.find_image("air.png"):
         mode.append('air')
     if automator.find_image("ground.png",confidence=1):
@@ -122,13 +127,14 @@ def get_current_selected():
 
 def country_select_flow():
 
-    if automator.find_image("readytemp.png"):
+    if automator.find_image("ready.png"):
         if get_command_qq(user):
             cmd = get_command_qq(user)
             country = cmd[0]
             mode = cmd[1]
+            prompt_qq(user,country+','+mode)
 
-            if get_current_selected()[0] == country:
+            if not get_current_selected():
                 print("Already Selected")
                 mode = f"{mode}.png"
                 automator.click_element(automator.find_image, template_path=mode)
@@ -153,7 +159,7 @@ def country_select_flow():
             return False
 
     else:
-        print("Not in Squad")
+        print("Ready Not Possible")
         return False
 
 def gametime_idle():
@@ -174,13 +180,12 @@ def go_spectator():
         return False
 
 def return_hanger():
-    if automator.wait_for_element(automator.find_image, template_path="tohanger.png"):
-        automator.click_element(automator.find_image, template_path="tohanger.png")
+    if automator.click_element(automator.find_image, template_path="tohanger.png"):
         return True
     else:
         return False
 
-user = "神户"
+user = "LucasZ"
 active_window = gw.getActiveWindow()
 active_window.minimize()
 
@@ -191,26 +196,24 @@ activate_window("War Thunder")
 while True:
     state = is_in_hanger()
     while state:
-        print("In Hanger")
+        print("Not in Game")
+        if return_hanger():
+            print("Returning to Hanger")
+            break
         if country_select_flow():
             prompt_qq(user,"OK")
             print("Ready")
-            time.sleep(5)
             break
         else:
             print("Ready Already")
-            time.sleep(10)
+            break
     else:
         print("Not in Hanger")
         if go_spectator():
             print("Spectating")
             prompt_qq(user, "Spectating")
+            break
         else:
             print("Failed to enter Spectator Mode")
             prompt_qq(user, "Failed to enter Spectator Mode")
-        if return_hanger():
-            print("Returning to Hanger")
-            time.sleep(10)
-        else:
-            print("Return Failed")
-            gametime_idle()
+        gametime_idle()
