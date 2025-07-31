@@ -5,16 +5,67 @@ import numpy as np
 import pytesseract
 import pyautogui
 import ctypes
-from typing import Optional, Tuple, List, Callable, Dict
+from typing import Optional, Tuple, List, Callable, Dict, Any, Union
 from dataclasses import dataclass
 import logging
 from enum import Enum, auto
+import configparser
+from pathlib import Path
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 pytesseract.pytesseract.tesseract_cmd = r'D:\Program Files\Tesseract-OCR\tesseract.exe'
 
+class ConfigManager:
+    def __init__(self, config_path: Union[str, Path] = "config.ini"):
+        """
+        :param config_path: 配置文件路径
+        """
+        self.config_path = Path(config_path)
+        self.config = configparser.ConfigParser(allow_no_value=True)
+        self.config.optionxform = str  # 保持键的大小写敏感
+
+    def load_config(self) -> Dict[str, Any]:
+        """加载配置文件"""
+        if not self.config_path.exists():
+            raise FileNotFoundError(f"配置文件不存在: {self.config_path}")
+
+        self.config.read(self.config_path, encoding='utf-8')
+        return {s: dict(self.config.items(s)) for s in self.config.sections()}
+
+    def save_config(self, data: Dict[str, Any]):
+        """保存配置文件"""
+        for section, options in data.items():
+            if not self.config.has_section(section):
+                self.config.add_section(section)
+            for key, value in options.items():
+                self.config.set(section, key, str(value))
+
+        with open(self.config_path, 'w', encoding='utf-8') as f:
+            self.config.write(f)
+
+    def get_value(self, section: str, key: str, default=None) -> Any:
+        """获取配置值"""
+        try:
+            if self.config.has_option(section, key):
+                val = self.config.get(section, key)
+                # 自动尝试类型转换
+                if val.lower() == 'true': return True
+                if val.lower() == 'false': return False
+                try:
+                    return int(val)
+                except:
+                    pass
+                try:
+                    return float(val)
+                except:
+                    pass
+                return val
+            return default
+        except Exception as e:
+            print(f"读取配置失败: {e}")
+            return default
 
 @dataclass
 class ScreenRegion:
@@ -302,4 +353,19 @@ def mouseScroll(direction: str = "up", clicks: int = 1):
     else:
         raise ValueError("方向必须是 'up' 或 'down'")
 
-    mouseEvent(0x0800, dwData=dwData)  # MOUSEEVENTF_WHEEL
+    mouseEvent(0x0800, dwData=dwData)  # MOUSEEVENTF_WHEE
+
+config = ConfigManager()
+if not Path("config.ini").exists():
+    default_config = {
+        "User": {
+            "user": "LucasZ",
+        },
+        "pytesseract": {
+            "path": r'D:\Program Files\Tesseract-OCR\tesseract.exe',
+        }
+    }
+    config.save_config(default_config)
+
+settings = config.load_config()
+pytesseract.pytesseract.tesseract_cmd = config.get_value("pytesseract",["path"])

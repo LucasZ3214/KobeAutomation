@@ -2,8 +2,10 @@ import time
 import pyautogui
 import pytesseract
 import pygetwindow as gw
-from frame import ScreenAutomator
+from frame import ScreenAutomator, ConfigManager
+from pathlib import Path
 
+config = ConfigManager()
 
 def list_difference_set(list1, list2):
     return list(set(list1) - set(list2))
@@ -185,7 +187,21 @@ def return_hanger():
     else:
         return False
 
-user = "LucasZ"
+if not Path("config.ini").exists():
+    default_config = {
+        "User": {
+            "user": "LucasZ",
+        },
+        "pytesseract": {
+            "path": r'D:\Program Files\Tesseract-OCR\tesseract.exe',
+        }
+    }
+    config.save_config(default_config)
+
+settings = config.load_config()
+
+#user = "LucasZ"
+user = config.get_value("User", "user")
 active_window = gw.getActiveWindow()
 active_window.minimize()
 
